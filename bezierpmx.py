@@ -5,6 +5,9 @@ from math import comb
 import mido
 from mido import Message
 
+# Draw bezier and convert pyramix fader control (Mackie Control Universal)
+# This script is affect Track1 fader only.
+
 
 class MIDIController:
     def __init__(self, port=1, channel=1):
@@ -15,12 +18,12 @@ class MIDIController:
         self.out_port = mido.open_output(self.port_name)
 
     def send_mackie_control_message(self, value, msg_type="pitchwheel", cc_number=91):
-        print("send_mackie_control_message called")  # 追加
+        print("send_mackie_control_message called")  
         try:
             if msg_type in ['control_change', 'note_on', 'note_off', 'aftertouch', 'polytouch']:
                 msg = mido.Message(msg_type, control=cc_number, value=value, channel=self.channel)
             elif msg_type == 'pitchwheel':
-                # Convert the value to a valid pitchwheel value (-8192 to 8191)
+                
                 value = value - 8192
                 msg = mido.Message(msg_type, pitch=value, channel=self.channel)
             else:
@@ -31,9 +34,9 @@ class MIDIController:
             print(f"Sent MIDI CC Value {value}")
 
         except ValueError:
-            # Ignore if the input is not a valid integer
+            
             pass
-        except IndexError:  # Handle the case when the selected port number is not available
+        except IndexError:  
             print(f"Invalid port number: {self.port}")
             pass
 
@@ -52,7 +55,7 @@ def bezier_point(t, control_points):
 
 pygame.init()
 
-screen = pygame.display.set_mode((800, 1024))  # 縦 1024 ドットに変更
+screen = pygame.display.set_mode((800, 1024)) 
 pygame.display.set_caption("Bezier Curve")
 
 start_point = (0, 512)
@@ -89,13 +92,13 @@ while running:
                 if go_button.collidepoint(event.pos):
                     go_button_pressed = True
 
-            elif event.button == 3:  # Right-click
+            elif event.button == 3:  
                 modifiers = pygame.key.get_mods()
                 if modifiers & pygame.KMOD_SHIFT:
-                    # Add a control point
+  
                     control_points.insert(-1, event.pos)
                 elif modifiers & pygame.KMOD_ALT:
-                    # Remove a control point
+
                     for idx, point in enumerate(control_points):
                         if abs(event.pos[0] - point[0]) < 10 and abs(event.pos[1] - point[1]) < 10:
                             control_points.pop(idx)
@@ -143,8 +146,8 @@ while running:
 
             output_count = 32000
             if dot_position % (moving_time * 60 / output_count) < 1:
-                value = int((1 - (y / 1024)) * 16383)  # 縦 1024 ドットの範囲を使用
-                value = (value // 16) * 16  # 数値を 0 または 16 の倍数にする
+                value = int((1 - (y / 1024)) * 16383)  
+                value = (value // 16) * 16  
                 print("Calling send_mackie_control_message")
                 midi_controller.send_mackie_control_message(value)
                 print(f"dot_position: {dot_position}, value: {value}")
