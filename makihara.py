@@ -3,16 +3,18 @@ from PySide6.QtWidgets import QApplication, QWidget, QVBoxLayout, QHBoxLayout, Q
 from PySide6.QtCore import Qt
 import mido
 
+# Mackie control test script
+
 class MackieControlFader(QWidget):
     def __init__(self, *args, **kwargs):
         super(MackieControlFader, self).__init__(*args, **kwargs)
         self.init_ui()
-        self.init_midi()  # Initialize MIDI port
-        self.update_fader_range()  # Initialize fader range based on the initial value range
+        self.init_midi()  
+        self.update_fader_range()  
 
     def init_midi(self):
         available_ports = mido.get_output_names()
-        selected_port_index = self.port_edit.value() - 1  # Change this to the desired output port index
+        selected_port_index = self.port_edit.value() - 1  
 
         if 0 <= selected_port_index < len(available_ports):
             out_port_name = available_ports[selected_port_index]
@@ -25,7 +27,6 @@ class MackieControlFader(QWidget):
 
         vbox = QVBoxLayout()
 
-        # Create the form
         form_layout = QHBoxLayout()
 
         form_layout.addWidget(QLabel('Port:'))
@@ -49,7 +50,6 @@ class MackieControlFader(QWidget):
         self.cc_edit.setRange(0, 127)
         form_layout.addWidget(self.cc_edit)
 
-        # Create Value Range dropdown
         form_layout.addWidget(QLabel('Value Range:'))
         self.value_range_combobox = QComboBox()
         self.value_range_combobox.addItems([f"{i} bit" for i in range(1, 17)])
@@ -57,14 +57,13 @@ class MackieControlFader(QWidget):
 
         vbox.addLayout(form_layout)
 
-        # Create a fader
+
         self.fader = QSlider(Qt.Orientation.Horizontal)
-        self.update_fader_range()  # Initialize fader range based on the initial value range
+        self.update_fader_range()  
         self.fader.valueChanged.connect(self.send_mackie_control_message)
 
         vbox.addWidget(self.fader)
 
-        # Create + and - buttons
         button_layout = QHBoxLayout()
         self.plus_button = QPushButton("+")
         self.plus_button.clicked.connect(lambda: self.fader.setValue(self.fader.value() + 1))
@@ -78,12 +77,12 @@ class MackieControlFader(QWidget):
 
         self.setLayout(vbox)
 
-        # Update the fader range when the value range is changed
+
         self.value_range_combobox.currentIndexChanged.connect(self.update_fader_range)
 
     def update_fader_range(self):
         bit_ranges = {f"{i} bit": (0, 2**i - 1) for i in range(1, 17)}
-        bit_ranges["14 bit"] = (0, 16383)  # Update the range for 14-bit values
+        bit_ranges["14 bit"] = (0, 16383)  
 
         value_range = self.value_range_combobox.currentText()
         min_value, max_value = bit_ranges[value_range]
@@ -102,13 +101,13 @@ class MackieControlFader(QWidget):
                 if msg_type in ['control_change', 'note_on', 'note_off', 'aftertouch', 'polytouch']:
                     msg = mido.Message(msg_type, control=cc_or_note, value=value, channel=channel)
                 elif msg_type == 'pitchwheel':
-                    # Convert the value to a valid pitchwheel value (-8192 to 8191)
+                    
                     value = value - 8192
                     msg = mido.Message(msg_type, pitch=value, channel=channel)
                 self.out_port.send(msg)
                 print(f'Sent: {msg}')
         except ValueError:
-            # Ignore if the input is not a valid integer
+            
             pass
 
 
